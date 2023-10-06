@@ -38,6 +38,8 @@ class TextbookStack(object):
 
     def __str__(self):
         return f"TextbookStack:\n\torder: {self.order}\n\torientations:{self.orientations}"
+    
+
 
 
 def apply_sequence(stack, sequence):

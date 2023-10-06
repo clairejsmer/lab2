@@ -4,68 +4,56 @@ import heapq
 from lab2_utils import TextbookStack, apply_sequence
 from collections import deque
 
+# create node that keeps track of state, flip sequence, score (g + h)
 class Node(object): 
-    def __init__(self, stack: TextbookStack, flip_sequence: list, g=0, h=0):
+    def __init__(self, score, stack: TextbookStack, flip_sequence: list):
+        self.score = score
         self.stack = stack
         self.flip_sequence = flip_sequence
-        self.g = g
-        self.h = h
+        
 
     def print(self):
         print(self.stack)
         print(self.flip_sequence)
-        print(self.g)
-        print(self.h)
+        print(self.score)
 
-    def comp(self, other):
-        return (self.g + self.h) < (other.g + other.h)
-
+    def __lt__(self, other):
+        return (self.score) < (other.score)
 
 
 def a_star_search(stack):
     flip_sequence = []
     n = len(stack.order)
-    curr = stack
-    g = find_heuristic(curr)
-    curr = [(stack, flip_sequence, g)]
-    s = []
-    s.append(curr)
-    # start = Node(stack, flip_sequence, 0, find_heuristic(stack))
-    
-
+    h = find_heuristic(stack)
+    start = Node(h, stack, flip_sequence)
     visited = []
-    heapq.heappush(s, curr) 
+    s = []
+    heapq.heappush(s, start)
 
     while s:
+        curr = heapq.heappop(s)
 
-        c = heapq.heappop(s)
-        curr = c[0]
-        currflip = c[1]
-        currg = c[2]
-
-        if curr.check_ordered():
-            print("FOUND SOLUTION")
-            print("order: ", curr.order)
-            print("orientation: ", curr.orientations)
-            print("flip sequence: ", currflip)
-            return currflip
-
-
+        # found goal state
+        if curr.stack.check_ordered():
+            return curr.flip_sequence
+ 
+        # if haven't been to state before, go through neighbors and add to heap if cost (h + g) < current state's cost
         if curr not in visited:
             visited.append(curr)
             for i in range (1, n+1):
-                next = curr.copy()
+                next = curr.stack.copy()
                 next.flip_stack(i)
-                new_flip = currflip + [i]
-                h = find_heuristic(next) + len(new_flip)
-                if currg > h:
-                    print("order: ", next.order)
-                    print("orientations: ", next.orientations)
-                    new = [(next, new_flip, h)]
-                    s.append(new)
+                new_flip = curr.flip_sequence + [i]
+                # calcuate heuristic for neighbor 
+                next_h = find_heuristic(next) + len(new_flip)
+                new = Node(next_h, next, new_flip)
+                s.append(new)   
+                if curr < new:
+                    continue
+                else:
                     heapq.heappush(s, new)
-    print("ERROR RETURN")       
     return flip_sequence   
+
 
 
 
@@ -79,9 +67,9 @@ def find_heuristic(stack):
             h = h + 1
         elif ors[i] != ors[i - 1]:
             h = h + 1
-        elif nums[i] - nums[i - 1] == -1 & ors[i] == 1 & ors[i - 1] == 1:
+        elif nums[i] - nums[i - 1] == -1 and ors[i] == 1 and ors[i - 1] == 1:
             h = h + 1
-        elif nums[i] - nums[i - 1] == 1 & ors[i] == 0 & ors[i - 1] == 0:
+        elif nums[i] - nums[i - 1] == 1 and ors[i] == 0 and ors[i - 1] == 0:
             h = h + 1
     return h 
 
